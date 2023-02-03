@@ -1,0 +1,13 @@
+name = "linux_hal"
+description = "HAL drivers for Linux GPIO and SPI interfaces"
+version = "0.1.0-dev"
+
+authors = ["Jeremy Grosser"]
+maintainers = ["Jeremy Grosser <jeremy@synack.me>"]
+maintainers-logins = ["JeremyGrosser"]
+licenses = "BSD-3-Clause"
+website = ""
+tags = []
+
+[[depends-on]]
+hal = "~0.3.0"
