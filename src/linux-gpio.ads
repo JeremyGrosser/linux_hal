@@ -5,7 +5,9 @@
 --
 with HAL.GPIO;
 
-package Linux.GPIO is
+package Linux.GPIO
+   with Preelaborate
+is
 
    type GPIO_Point is new HAL.GPIO.GPIO_Point with private;
 
