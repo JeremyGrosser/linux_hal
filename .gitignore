@@ -3,3 +3,6 @@
 /config/
 *.ali
 *.swp
+*.a
+*.o
+*.so
