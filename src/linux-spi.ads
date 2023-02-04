@@ -8,7 +8,7 @@ with HAL.SPI;
 with HAL;
 
 package Linux.SPI
-   with Elaborate_Body
+   with Preelaborate
 is
 
    type Port
