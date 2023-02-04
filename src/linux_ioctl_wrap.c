@@ -16,5 +16,5 @@ int linux_spi_set_max_speed(int fd, uint32_t *hz) {
 }
 
 int linux_spi_get_max_speed(int fd, uint32_t *hz) {
-    return ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, hz);
+    return ioctl(fd, SPI_IOC_RD_MAX_SPEED_HZ, hz);
 }
