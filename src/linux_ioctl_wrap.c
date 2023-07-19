@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 #include <linux/spi/spidev.h>
+#include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
 #include <stdint.h>
 
@@ -17,4 +18,8 @@ int linux_spi_set_max_speed(int fd, uint32_t *hz) {
 
 int linux_spi_get_max_speed(int fd, uint32_t *hz) {
     return ioctl(fd, SPI_IOC_RD_MAX_SPEED_HZ, hz);
+}
+
+int linux_i2c_set_slave_address(int fd, int addr) {
+    return ioctl(fd, I2C_SLAVE, addr);
 }

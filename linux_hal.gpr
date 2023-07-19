@@ -1,5 +1,6 @@
 with "config/linux_hal_config.gpr";
 with "libgpiod.gpr";
+with "libi2c.gpr";
 
 project Linux_Hal is
 

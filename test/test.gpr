@@ -8,7 +8,9 @@ project Test is
    for Main use ("test.adb");
 
    package Compiler is
-      for Default_Switches ("Ada") use Test_Config.Ada_Compiler_Switches;
+      for Default_Switches ("Ada") use Test_Config.Ada_Compiler_Switches & (
+         "-gnatyM120"
+      );
    end Compiler;
 
    package Binder is
