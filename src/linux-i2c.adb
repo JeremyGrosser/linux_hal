@@ -1,25 +1,11 @@
-with GNAT.OS_Lib;
-with Interfaces;
+with Interfaces.C;
 
 package body Linux.I2C is
-   subtype s32 is Interfaces.Integer_32;
-   use type Interfaces.Integer_32;
-
    subtype int is Interfaces.C.int;
-
-   function i2c_smbus_write_byte
-      (file  : int;
-       value : UInt8)
-       return s32
-   with Import, Convention => C, External_Name => "i2c_smbus_write_byte";
-
-   function i2c_smbus_read_byte
-      (file : int)
-       return s32
-   with Import, Convention => C, External_Name => "i2c_smbus_read_byte";
+   use type Interfaces.C.int;
 
    procedure Check
-      (Errno  : s32;
+      (Errno  : int;
        Status : out I2C_Status)
    is
    begin
@@ -40,23 +26,38 @@ package body Linux.I2C is
          return int
       with Import, Convention => C, External_Name => "linux_i2c_set_slave_address";
 
-      A     : int;
+      function linux_i2c_set_tenbit_addressing
+         (file : int; enabled : int)
+         return int
+      with Import, Convention => C, External_Name => "linux_i2c_set_tenbit_addressing";
+
       Errno : int;
    begin
-      if This.Address_Size = Address_Size_7b then
-         A := int (Addr and 16#7F#);
-      else
-         A := int (Addr and 16#3FF#);
+      Errno := linux_i2c_set_tenbit_addressing
+         (int (This.FD), (if This.Address_Size = Address_Size_10b then 1 else 0));
+      Check (Errno, Status);
+      if Status /= Ok then
+         return;
       end if;
 
       if This.Slave_Addr /= Addr then
-         Errno := linux_i2c_set_slave_address (This.FD, A);
-         Check (s32 (Errno), Status);
+         Errno := linux_i2c_set_slave_address (int (This.FD), int (Addr));
+         Check (Errno, Status);
          if Status = Ok then
             This.Slave_Addr := Addr;
          end if;
       end if;
    end Set_Slave_Address;
+
+   procedure Set_Timeout
+      (This    : Port;
+       Timeout : Natural)
+   is
+      procedure linux_i2c_set_timeout (fd : int; ms : int)
+         with Import, Convention => C, External_Name => "linux_i2c_set_timeout";
+   begin
+      linux_i2c_set_timeout (int (This.FD), int (Timeout));
+   end Set_Timeout;
 
    procedure Open
       (This          : in out Port;
@@ -64,7 +65,7 @@ package body Linux.I2C is
        Address_Size  : I2C_Address_Size := Address_Size_7b)
    is
    begin
-      This.FD := int (GNAT.OS_Lib.Open_Read_Write (Filename, GNAT.OS_Lib.Binary));
+      This.FD := GNAT.OS_Lib.Open_Read_Write (Filename, GNAT.OS_Lib.Binary);
       This.Address_Size := Address_Size;
    end Open;
 
@@ -77,7 +78,7 @@ package body Linux.I2C is
       (This : in out Port)
    is
    begin
-      GNAT.OS_Lib.Close (GNAT.OS_Lib.File_Descriptor (This.FD));
+      GNAT.OS_Lib.Close (This.FD);
       This.FD := -1;
    end Close;
 
@@ -89,19 +90,18 @@ package body Linux.I2C is
        Status  : out I2C_Status;
        Timeout : Natural := 1000)
    is
-      Errno : s32;
+      Bytes_Written : Integer;
    begin
+      Set_Timeout (This, Timeout);
       Set_Slave_Address (This, Addr, Status);
       if Status /= Ok then
          return;
       end if;
 
-      for D of Data loop
-         Errno := i2c_smbus_write_byte (This.FD, D);
-         exit when Errno < 0;
-      end loop;
-
-      Check (Errno, Status);
+      Bytes_Written := GNAT.OS_Lib.Read (This.FD, Data'Address, Data'Length);
+      if Bytes_Written /= Data'Length then
+         Status := Err_Error;
+      end if;
    end Master_Transmit;
 
    overriding
@@ -112,19 +112,18 @@ package body Linux.I2C is
        Status  : out I2C_Status;
        Timeout : Natural := 1000)
    is
-      Value : s32;
+      Bytes_Read : Integer;
    begin
+      Set_Timeout (This, Timeout);
       Set_Slave_Address (This, Addr, Status);
       if Status /= Ok then
          return;
       end if;
 
-      for I in Data'Range loop
-         Value := i2c_smbus_read_byte (This.FD);
-         exit when Value < 0;
-         Data (I) := UInt8 (Value);
-      end loop;
-      Check (Value, Status);
+      Bytes_Read := GNAT.OS_Lib.Read (This.FD, Data'Address, Data'Length);
+      if Bytes_Read /= Data'Length then
+         Status := Err_Error;
+      end if;
    end Master_Receive;
 
    overriding

@@ -5,6 +5,7 @@
  */
 #include <linux/spi/spidev.h>
 #include <linux/i2c-dev.h>
+#include <linux/i2c.h>
 #include <sys/ioctl.h>
 #include <stdint.h>
 
@@ -22,4 +23,17 @@ int linux_spi_get_max_speed(int fd, uint32_t *hz) {
 
 int linux_i2c_set_slave_address(int fd, int addr) {
     return ioctl(fd, I2C_SLAVE, addr);
+}
+
+int linux_i2c_set_tenbit_addressing(int fd, int enabled) {
+    return ioctl(fd, I2C_TENBIT, (long)enabled);
+}
+
+void linux_i2c_set_timeout(int fd, int ms) {
+    ioctl(fd, I2C_TIMEOUT, ms / 10);
+    /*
+     * I2C_TIMEOUT will only fail if fd is closed or ms exceeds INT_MAX, both
+     * of which are prevented by Ada's assertions beforehand. Therefore, we can
+     * ignore the return value of this function.
+     */
 }

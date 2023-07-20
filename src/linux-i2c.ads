@@ -1,4 +1,4 @@
-private with Interfaces.C;
+private with GNAT.OS_Lib;
 with HAL.I2C; use HAL.I2C;
 with HAL; use HAL;
 
@@ -61,10 +61,10 @@ package Linux.I2C is
 
 private
 
-   use type Interfaces.C.int;
+   use type GNAT.OS_Lib.File_Descriptor;
 
    type Port is new HAL.I2C.I2C_Port with record
-      FD : Interfaces.C.int := -1;
+      FD           : GNAT.OS_Lib.File_Descriptor := -1;
       Address_Size : I2C_Address_Size;
       Slave_Addr   : I2C_Address;
    end record;
