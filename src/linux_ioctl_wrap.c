@@ -29,6 +29,10 @@ int linux_i2c_set_tenbit_addressing(int fd, int enabled) {
     return ioctl(fd, I2C_TENBIT, (long)enabled);
 }
 
+int linux_i2c_set_pec(int fd, int enabled) {
+    return ioctl(fd, I2C_PEC, (long)enabled);
+}
+
 void linux_i2c_set_timeout(int fd, int ms) {
     ioctl(fd, I2C_TIMEOUT, ms / 10);
     /*

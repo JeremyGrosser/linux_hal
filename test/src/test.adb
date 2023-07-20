@@ -10,6 +10,7 @@ with HAL;
 with Linux.GPIO;
 with Linux.SPI;
 with Linux.I2C;
+with Linux.SMBus;
 
 procedure Test is
    DS3231_Addr : constant HAL.I2C.I2C_Address := 2#1101000#;
@@ -35,16 +36,29 @@ procedure Test is
       return Shift_Left (UInt8 (N / 10), 4) or UInt8 (N mod 10);
    end To_BCD;
 
-   procedure Set_RTC
-      (Port : in out Linux.I2C.Port;
-       T    : Ada.Calendar.Time)
+   function To_Time
+      (Data : HAL.UInt8_Array)
+      return Ada.Calendar.Time
+   is
+      use Ada.Calendar;
+      use Ada.Calendar.Formatting;
+   begin
+      return Ada.Calendar.Formatting.Time_Of
+         (Year    => Year_Number (From_BCD (Data (6)) + 2000),
+          Month   => Month_Number (From_BCD (Data (5))),
+          Day     => Day_Number (From_BCD (Data (4))),
+          Hour    => Hour_Number (From_BCD (Data (2))),
+          Minute  => Minute_Number (From_BCD (Data (1))),
+          Second  => Second_Number (From_BCD (Data (0))));
+   end To_Time;
+
+   function From_Time
+      (T : Ada.Calendar.Time)
+      return HAL.UInt8_Array
    is
       package ACF renames Ada.Calendar.Formatting;
       use HAL;
-      use HAL.I2C;
-
-      Data   : I2C_Data (0 .. 6);
-      Status : I2C_Status;
+      Data : UInt8_Array (0 .. 6);
    begin
       Data (0) := To_BCD (ACF.Second (T));
       Data (1) := To_BCD (ACF.Minute (T));
@@ -53,11 +67,22 @@ procedure Test is
       Data (4) := To_BCD (ACF.Day (T));
       Data (5) := To_BCD (ACF.Month (T));
       Data (6) := To_BCD (ACF.Year (T) mod 100);
+      return Data;
+   end From_Time;
+
+   procedure Set_RTC
+      (Port : in out Linux.I2C.Port;
+       T    : Ada.Calendar.Time)
+   is
+      use HAL;
+      use HAL.I2C;
+      Status : I2C_Status;
+   begin
       Port.Mem_Write
          (Addr          => DS3231_Addr,
           Mem_Addr      => 0,
           Mem_Addr_Size => HAL.I2C.Memory_Size_8b,
-          Data          => Data,
+          Data          => I2C_Data (From_Time (T)),
           Status        => Status);
       Assert (Status = Ok);
    end Set_RTC;
@@ -66,8 +91,6 @@ procedure Test is
       (Port : in out Linux.I2C.Port)
       return Ada.Calendar.Time
    is
-      use Ada.Calendar.Formatting;
-      use Ada.Calendar;
       use HAL.I2C;
       Data     : I2C_Data (0 .. 6);
       Status   : I2C_Status;
@@ -79,18 +102,12 @@ procedure Test is
           Data          => Data,
           Status        => Status);
       Assert (Status = Ok);
-      return Time_Of
-         (Year    => Year_Number (From_BCD (Data (6)) + 2000),
-          Month   => Month_Number (From_BCD (Data (5))),
-          Day     => Day_Number (From_BCD (Data (4))),
-          Hour    => Hour_Number (From_BCD (Data (2))),
-          Minute  => Minute_Number (From_BCD (Data (1))),
-          Second  => Second_Number (From_BCD (Data (0))));
+      return To_Time (HAL.UInt8_Array (Data));
    end Get_RTC;
 
    package Cmd renames Ada.Command_Line;
    package Log renames Ada.Text_IO;
-   Test_GPIO, Test_SPI, Test_I2C : Boolean := False;
+   Test_GPIO, Test_SPI, Test_I2C, Test_SMBus : Boolean := False;
 begin
    if Cmd.Argument_Count = 0 then
       Log.Put ("Usage: ");
@@ -111,6 +128,8 @@ begin
             Test_SPI := True;
          elsif Arg = "i2c" then
             Test_I2C := True;
+         elsif Arg = "smbus" then
+            Test_SMBus := True;
          else
             Log.Put ("Unknown test: """);
             Log.Put (Cmd.Argument (I));
@@ -198,6 +217,39 @@ begin
          Log.New_Line;
 
          T := Get_RTC (Port);
+         Log.Put ("Get:        ");
+         Log.Put (Ada.Calendar.Formatting.Image (T));
+         Log.New_Line;
+
+         Port.Close;
+      end;
+   end if;
+
+   if Test_SMBus then
+      declare
+         use HAL;
+         Port  : Linux.SMBus.Port;
+         Addr  : constant Linux.SMBus.Target_Address := 2#1101000#;
+         Data  : UInt8_Array (0 .. 6);
+         T     : Ada.Calendar.Time;
+      begin
+         Port.Open ("/dev/i2c-1");
+         Port.Set_Address (Addr);
+
+         Port.Block_Read (16#00#, Data);
+         T := To_Time (Data);
+         Log.Put ("Before Set: ");
+         Log.Put (Ada.Calendar.Formatting.Image (T));
+         Log.New_Line;
+
+         T := Ada.Calendar.Clock;
+         Port.Block_Write (16#00#, From_Time (T));
+         Log.Put ("Set:        ");
+         Log.Put (Ada.Calendar.Formatting.Image (T));
+         Log.New_Line;
+
+         Port.Block_Read (16#00#, Data);
+         T := To_Time (Data);
          Log.Put ("Get:        ");
          Log.Put (Ada.Calendar.Formatting.Image (T));
          Log.New_Line;
