@@ -59,6 +59,7 @@ procedure Test is
           Mem_Addr_Size => HAL.I2C.Memory_Size_8b,
           Data          => Data,
           Status        => Status);
+      Assert (Status = Ok);
    end Set_RTC;
 
    function Get_RTC
@@ -77,6 +78,7 @@ procedure Test is
           Mem_Addr_Size => Memory_Size_8b,
           Data          => Data,
           Status        => Status);
+      Assert (Status = Ok);
       return Time_Of
          (Year    => Year_Number (From_BCD (Data (6)) + 2000),
           Month   => Month_Number (From_BCD (Data (5))),
