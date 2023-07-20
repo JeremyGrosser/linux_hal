@@ -168,7 +168,8 @@ package body Linux.SMBus is
        Command : UInt8;
        Data    : UInt8_Array)
    is
-      function i2c_smbus_write_block_data (file : int; command : UInt8; length : UInt8; values : UInt8_Array) return s32
+      function i2c_smbus_write_block_data
+         (file : int; command : UInt8; length : UInt8; values : UInt8_Array) return s32
          with Import, Convention => C, External_Name => "i2c_smbus_write_block_data";
    begin
       Check (i2c_smbus_write_block_data (This.FD, Command, UInt8 (Data'Length), Data));
@@ -179,7 +180,8 @@ package body Linux.SMBus is
        Command : UInt8;
        Data    : out UInt8_Array)
    is
-      function i2c_smbus_read_block_data (file : int; command : UInt8; length : UInt8; values : out UInt8_Array) return s32
+      function i2c_smbus_read_block_data
+         (file : int; command : UInt8; length : UInt8; values : out UInt8_Array) return s32
          with Import, Convention => C, External_Name => "i2c_smbus_read_block_data";
    begin
       Check (i2c_smbus_read_block_data (This.FD, Command, UInt8 (Data'Length), Data));
@@ -191,7 +193,8 @@ package body Linux.SMBus is
        Write   : UInt8_Array;
        Read    : out UInt8_Array)
    is
-      function i2c_smbus_block_process_call (file : int; command : UInt8; length : UInt8; values : in out UInt8_Array) return s32
+      function i2c_smbus_block_process_call
+         (file : int; command : UInt8; length : UInt8; values : in out UInt8_Array) return s32
          with Import, Convention => C, External_Name => "i2c_smbus_block_process_call";
       Data : UInt8_Array (1 .. 32);
       Result : s32;
