@@ -46,7 +46,7 @@ package Linux.I2C is
        Data          : I2C_Data;
        Status        : out I2C_Status;
        Timeout       : Natural := 1000)
-   with Pre => This.Is_Open;
+   with Pre => This.Is_Open and then Mem_Addr_Size = Memory_Size_8b;
 
    overriding
    procedure Mem_Read
@@ -57,7 +57,7 @@ package Linux.I2C is
        Data          : out I2C_Data;
        Status        : out I2C_Status;
        Timeout       : Natural := 1000)
-   with Pre => This.Is_Open;
+   with Pre => This.Is_Open and then Mem_Addr_Size = Memory_Size_8b;
 
 private
 
@@ -65,8 +65,8 @@ private
 
    type Port is new HAL.I2C.I2C_Port with record
       FD           : GNAT.OS_Lib.File_Descriptor := -1;
-      Address_Size : I2C_Address_Size;
-      Slave_Addr   : I2C_Address;
+      Address_Size : I2C_Address_Size := Address_Size_7b;
+      Slave_Addr   : I2C_Address := 0;
    end record;
 
 end Linux.I2C;

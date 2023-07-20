@@ -4,6 +4,41 @@ package body Linux.I2C is
    subtype int is Interfaces.C.int;
    use type Interfaces.C.int;
 
+   subtype s32 is Interfaces.Integer_32;
+   use type Interfaces.Integer_32;
+
+   --  linux_i2c functions wrap ioctls
+   function linux_i2c_set_slave_address
+      (file : int; addr : int)
+      return int
+   with Import, Convention => C, External_Name => "linux_i2c_set_slave_address";
+
+   procedure linux_i2c_set_timeout
+      (fd : int; ms : int)
+   with Import, Convention => C, External_Name => "linux_i2c_set_timeout";
+
+   function linux_i2c_set_tenbit_addressing
+      (file : int; enabled : int)
+      return int
+   with Import, Convention => C, External_Name => "linux_i2c_set_tenbit_addressing";
+
+   --  i2c_smbus functions are implemented by libi2c from i2c-tools. They also wrap ioctls.
+   function i2c_smbus_write_i2c_block_data
+      (file    : int;
+       command : UInt8;
+       length  : UInt8;
+       values  : I2C_Data)
+       return s32
+   with Import, Convention => C, External_Name => "i2c_smbus_write_i2c_block_data";
+
+   function i2c_smbus_read_i2c_block_data
+      (file    : int;
+       command : UInt8;
+       length  : UInt8;
+       values  : out I2C_Data)
+       return s32
+   with Import, Convention => C, External_Name => "i2c_smbus_read_i2c_block_data";
+
    procedure Check
       (Errno  : int;
        Status : out I2C_Status)
@@ -21,16 +56,6 @@ package body Linux.I2C is
        Addr    : I2C_Address;
        Status  : out I2C_Status)
    is
-      function linux_i2c_set_slave_address
-         (file : int; addr : int)
-         return int
-      with Import, Convention => C, External_Name => "linux_i2c_set_slave_address";
-
-      function linux_i2c_set_tenbit_addressing
-         (file : int; enabled : int)
-         return int
-      with Import, Convention => C, External_Name => "linux_i2c_set_tenbit_addressing";
-
       Errno : int;
    begin
       Errno := linux_i2c_set_tenbit_addressing
@@ -53,8 +78,6 @@ package body Linux.I2C is
       (This    : Port;
        Timeout : Natural)
    is
-      procedure linux_i2c_set_timeout (fd : int; ms : int)
-         with Import, Convention => C, External_Name => "linux_i2c_set_timeout";
    begin
       linux_i2c_set_timeout (int (This.FD), int (Timeout));
    end Set_Timeout;
@@ -135,7 +158,23 @@ package body Linux.I2C is
        Data          : I2C_Data;
        Status        : out I2C_Status;
        Timeout       : Natural := 1000)
-   is null;
+   is
+      Err : s32;
+   begin
+      Set_Timeout (This, Timeout);
+      Set_Slave_Address (This, Addr, Status);
+      if Status /= Ok then
+         return;
+      end if;
+
+      Err := i2c_smbus_write_i2c_block_data
+         (file    => int (This.FD),
+          command => UInt8 (Mem_Addr),
+          length  => UInt8 (Data'Length),
+          values  => Data);
+
+      Status := (if Err < 0 then Err_Error else Ok);
+   end Mem_Write;
 
    overriding
    procedure Mem_Read
@@ -146,5 +185,22 @@ package body Linux.I2C is
        Data          : out I2C_Data;
        Status        : out I2C_Status;
        Timeout       : Natural := 1000)
-   is null;
+   is
+      Err : s32;
+   begin
+      Set_Timeout (This, Timeout);
+      Set_Slave_Address (This, Addr, Status);
+      if Status /= Ok then
+         return;
+      end if;
+
+      Err := i2c_smbus_read_i2c_block_data
+         (file    => int (This.FD),
+          command => UInt8 (Mem_Addr),
+          length  => UInt8 (Data'Length),
+          values  => Data);
+
+      Status := (if Err < 0 then Err_Error else Ok);
+   end Mem_Read;
+
 end Linux.I2C;
