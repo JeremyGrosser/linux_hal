@@ -1,5 +1,6 @@
 with Interfaces;
 with GNAT.OS_Lib;
+with System;
 
 package body Linux.SMBus is
    subtype s32 is Interfaces.Integer_32;
@@ -178,13 +179,19 @@ package body Linux.SMBus is
    procedure Block_Read
       (This    : in out Port;
        Command : UInt8;
-       Data    : out UInt8_Array)
+       Data    : out UInt8_Array;
+       Last    : out Natural)
    is
       function i2c_smbus_read_block_data
-         (file : int; command : UInt8; length : UInt8; values : out UInt8_Array) return s32
+         (file : int; command : UInt8; values : System.Address) return s32
          with Import, Convention => C, External_Name => "i2c_smbus_read_block_data";
+      Buffer : UInt8_Array (1 .. 32);
+      Length : s32;
    begin
-      Check (i2c_smbus_read_block_data (This.FD, Command, UInt8 (Data'Length), Data));
+      Length := i2c_smbus_read_block_data (This.FD, Command, Buffer'Address);
+      Check (Length);
+      Last := Data'First + Natural (Length) - 1;
+      Data (Data'First .. Last) := Buffer (1 .. Natural (Length));
    end Block_Read;
 
    procedure Block_RW_Process_Call

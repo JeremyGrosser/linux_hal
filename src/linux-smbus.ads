@@ -76,8 +76,8 @@ package Linux.SMBus is
    procedure Block_Read
       (This    : in out Port;
        Command : UInt8;
-       Data    : out UInt8_Array)
-   with Pre => Data'Length <= 32;
+       Data    : out UInt8_Array;
+       Last    : out Natural);
 
    procedure Block_RW_Process_Call
       (This    : in out Port;

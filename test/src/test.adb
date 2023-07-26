@@ -228,31 +228,48 @@ begin
    if Test_SMBus then
       declare
          use HAL;
-         Port  : Linux.SMBus.Port;
-         Addr  : constant Linux.SMBus.Target_Address := 2#1101000#;
-         Data  : UInt8_Array (0 .. 6);
-         T     : Ada.Calendar.Time;
+
+         Hex_Digits : constant String := "0123456789ABCDEF";
+         function Hex (D : UInt4) return Character
+         is (Hex_Digits (Natural (D) + 1));
+
+         function Hex (D : UInt8) return String
+         is (Hex (UInt4 (Shift_Right (D, 4))) & Hex (UInt4 (D and 16#F#)));
+
+         procedure Print
+            (D : UInt8_Array)
+         is
+         begin
+            for I in D'Range loop
+               Log.Put (Hex (D (I)));
+               Log.Put (' ');
+               if I mod 8 = 0 then
+                  Log.New_Line;
+               end if;
+            end loop;
+            Log.New_Line;
+         end Print;
+
+         Port : Linux.SMBus.Port;
+         Addr : constant Linux.SMBus.Target_Address := 2#1010_000#; --  CAT24C32F
+         Data : UInt8_Array (1 .. 32);
+         Last : Natural;
       begin
          Port.Open ("/dev/i2c-1");
          Port.Set_Address (Addr);
 
-         Port.Block_Read (16#00#, Data);
-         T := To_Time (Data);
-         Log.Put ("Before Set: ");
-         Log.Put (Ada.Calendar.Formatting.Image (T));
-         Log.New_Line;
+         Data := (others => 0);
+         Port.Block_Read (0, Data, Last);
+         Log.Put_Line ("Before:");
+         Print (Data (1 .. Last));
 
-         T := Ada.Calendar.Clock;
-         Port.Block_Write (16#00#, From_Time (T));
-         Log.Put ("Set:        ");
-         Log.Put (Ada.Calendar.Formatting.Image (T));
-         Log.New_Line;
+         Data := (others => 16#42#);
+         Port.Block_Write (0, Data);
 
-         Port.Block_Read (16#00#, Data);
-         T := To_Time (Data);
-         Log.Put ("Get:        ");
-         Log.Put (Ada.Calendar.Formatting.Image (T));
-         Log.New_Line;
+         Data := (others => 0);
+         Port.Block_Read (0, Data, Last);
+         Log.Put_Line ("After:");
+         Print (Data (1 .. Last));
 
          Port.Close;
       end;
