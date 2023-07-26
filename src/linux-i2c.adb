@@ -121,7 +121,7 @@ package body Linux.I2C is
          return;
       end if;
 
-      Bytes_Written := GNAT.OS_Lib.Read (This.FD, Data'Address, Data'Length);
+      Bytes_Written := GNAT.OS_Lib.Write (This.FD, Data'Address, Data'Length);
       if Bytes_Written /= Data'Length then
          Status := Err_Error;
       end if;
