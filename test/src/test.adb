@@ -114,7 +114,7 @@ begin
       Log.Put (Cmd.Command_Name);
       Log.Put (" (gpio|spi|i2c)");
       Log.New_Line;
-      Cmd.Set_Exit_Status (1);
+      Cmd.Set_Exit_Status (0);
       return;
    end if;
 
