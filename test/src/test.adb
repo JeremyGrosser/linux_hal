@@ -177,30 +177,12 @@ begin
 
    if Test_I2C then
       declare
-         use HAL.I2C;
-         Port   : aliased Linux.I2C.Port;
-         Addr   : constant I2C_Address := 2#1101000#; --  DS3231
-         Data   : I2C_Data (1 .. 1);
-         Status : I2C_Status;
-
-         T : Ada.Calendar.Time;
+         Port  : aliased Linux.I2C.Port;
+         T     : Ada.Calendar.Time;
       begin
          Port.Open ("/dev/i2c-1");
          if not Port.Is_Open then
             Log.Put_Line ("Opening i2c bus device failed");
-            Cmd.Set_Exit_Status (1);
-            return;
-         end if;
-
-         Port.Mem_Read
-            (Addr          => Addr,
-             Mem_Addr      => 16#00#,
-             Mem_Addr_Size => Memory_Size_8b,
-             Data          => Data,
-             Status        => Status);
-
-         if Status /= Ok then
-            Log.Put_Line ("I2C Mem_Read failed");
             Cmd.Set_Exit_Status (1);
             return;
          end if;
