@@ -15,5 +15,5 @@ libgpiod = "^1"
 libi2c = "^4"
 
 [available.'case(distribution)']
-'debian|ubuntu' = true
+'debian|ubuntu|fedora|centos' = true
 '...' = false
