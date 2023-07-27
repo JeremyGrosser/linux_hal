@@ -1,13 +1,15 @@
 name = "linux_hal"
-description = "HAL drivers for Linux GPIO and SPI interfaces"
-version = "0.1.0-dev"
+description = "HAL drivers for Linux userspace"
+version = "1.0.0"
 
 authors = ["Jeremy Grosser"]
 maintainers = ["Jeremy Grosser <jeremy@synack.me>"]
 maintainers-logins = ["JeremyGrosser"]
 licenses = "BSD-3-Clause"
-website = ""
-tags = []
+website = "https://github.com/JeremyGrosser/linux_hal"
+tags = ["embedded", "hal", "linux", "i2c", "smbus", "gpio", "spi"]
 
 [[depends-on]]
 hal = "~0.3.0"
+libgpiod = "^1"
+libi2c = "^4"
