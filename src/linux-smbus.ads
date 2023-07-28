@@ -1,3 +1,8 @@
+--
+--  Copyright (C) 2023 Jeremy Grosser <jeremy@synack.me>
+--
+--  SPDX-License-Identifier: BSD-3-Clause
+--
 --  System Management Bus (SMBus) Specification, version 3.2
 --  http://www.smbus.org/specs/SMBus_3_2_20220112.pdf
 private with Interfaces.C;

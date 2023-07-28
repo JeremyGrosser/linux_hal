@@ -1,3 +1,8 @@
+--
+--  Copyright (C) 2023 Jeremy Grosser <jeremy@synack.me>
+--
+--  SPDX-License-Identifier: BSD-3-Clause
+--
 with Ada.Assertions; use Ada.Assertions;
 with Ada.Calendar.Formatting;
 with Ada.Calendar;

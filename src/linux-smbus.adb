@@ -1,3 +1,8 @@
+--
+--  Copyright (C) 2023 Jeremy Grosser <jeremy@synack.me>
+--
+--  SPDX-License-Identifier: BSD-3-Clause
+--
 with Interfaces;
 with GNAT.OS_Lib;
 with System;

@@ -1,3 +1,8 @@
+--
+--  Copyright (C) 2023 Jeremy Grosser <jeremy@synack.me>
+--
+--  SPDX-License-Identifier: BSD-3-Clause
+--
 private with GNAT.OS_Lib;
 with HAL.I2C; use HAL.I2C;
 with HAL; use HAL;
