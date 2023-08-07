@@ -306,7 +306,7 @@ begin
          Rate     : constant := 48_000;
          Beep     : constant Audio_Buffer := Tone
             (Frequency     => Hertz (2_600),
-             Length        => Milliseconds (100),
+             Length        => Milliseconds (60),
              Gain          => 0.5,
              Sample_Rate   => Rate);
          Silence  : Audio_Buffer (Beep'Range) := (others => 0);

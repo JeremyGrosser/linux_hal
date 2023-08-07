@@ -176,7 +176,7 @@ package body Linux.Audio is
          Initialize (This, PulseAudio.Stream_Playback);
       end if;
 
-      Status := PulseAudio.Write (This.TX, Data, size_t (Data'Length), null);
+      Status := PulseAudio.Write (This.TX, Data, size_t (Data'Size / 8), null);
       if Status /= 0 then
          raise Audio_Error;
       end if;
@@ -208,7 +208,7 @@ package body Linux.Audio is
          Initialize (This, PulseAudio.Stream_Record);
       end if;
 
-      Status := PulseAudio.Read (This.RX, Data, size_t (Data'Length), null);
+      Status := PulseAudio.Read (This.RX, Data, size_t (Data'Size / 8), null);
       if Status /= 0 then
          raise Audio_Error;
       end if;
