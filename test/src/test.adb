@@ -8,14 +8,19 @@ with Ada.Calendar.Formatting;
 with Ada.Calendar;
 with Ada.Text_IO;
 with Ada.Command_Line;
+with Ada.Numerics.Elementary_Functions;
+with Ada.Numerics;
+with Interfaces;
 with HAL.GPIO;
 with HAL.SPI;
 with HAL.I2C;
+with HAL.Audio;
 with HAL;
 with Linux.GPIO;
 with Linux.SPI;
 with Linux.I2C;
 with Linux.SMBus;
+with Linux.Audio;
 
 procedure Test is
    DS3231_Addr : constant HAL.I2C.I2C_Address := 2#1101000#;
@@ -112,12 +117,12 @@ procedure Test is
 
    package Cmd renames Ada.Command_Line;
    package Log renames Ada.Text_IO;
-   Test_GPIO, Test_SPI, Test_I2C, Test_SMBus : Boolean := False;
+   Test_GPIO, Test_SPI, Test_I2C, Test_SMBus, Test_Audio : Boolean := False;
 begin
    if Cmd.Argument_Count = 0 then
       Log.Put ("Usage: ");
       Log.Put (Cmd.Command_Name);
-      Log.Put (" (gpio|spi|i2c)");
+      Log.Put (" (gpio|spi|i2c|smbus|audio)");
       Log.New_Line;
       Cmd.Set_Exit_Status (0);
       return;
@@ -135,6 +140,8 @@ begin
             Test_I2C := True;
          elsif Arg = "smbus" then
             Test_SMBus := True;
+         elsif Arg = "audio" then
+            Test_Audio := True;
          else
             Log.Put ("Unknown test: """);
             Log.Put (Cmd.Argument (I));
@@ -259,6 +266,63 @@ begin
          Print (Data (1 .. Last));
 
          Port.Close;
+      end;
+   end if;
+
+   if Test_Audio then
+      declare
+         use HAL.Audio;
+         subtype Hertz is Float;
+         subtype Milliseconds is Natural;
+
+         function Tone
+            (Frequency     : Hertz;
+             Length        : Milliseconds;
+             Gain          : Float := 1.0;
+             Sample_Rate   : Positive)
+             return HAL.Audio.Audio_Buffer
+         is
+            subtype Sample is Interfaces.Integer_16;
+
+            function Clip (F : Float) return Float
+            is (Float'Max (-1.0, Float'Min (1.0, F)));
+
+            package Math renames Ada.Numerics.Elementary_Functions;
+            Pi : constant := Ada.Numerics.Pi;
+
+            Num_Samples : constant Positive := Positive (Float (Sample_Rate) / 1_000.0 * Float (Length));
+            Buffer      : HAL.Audio.Audio_Buffer (1 .. Num_Samples);
+            X : Float;
+         begin
+            for T in Buffer'Range loop
+               X := Math.Sin (Frequency * 2.0 * Pi * Float (T) * (1.0 / Float (Sample_Rate)));
+               X := Clip (X * Gain);
+               Buffer (T) := Sample (X * Float (Sample'Last));
+            end loop;
+            return Buffer;
+         end Tone;
+
+         Stream   : Linux.Audio.Audio_Stream;
+         Rate     : constant := 48_000;
+         Beep     : constant Audio_Buffer := Tone
+            (Frequency     => Hertz (2_600),
+             Length        => Milliseconds (100),
+             Gain          => 0.5,
+             Sample_Rate   => Rate);
+         Silence  : Audio_Buffer (Beep'Range) := (others => 0);
+      begin
+         Stream.Set_Channels (1);
+         Stream.Set_Frequency (Rate);
+
+         for I in 1 .. 4 loop
+            Stream.Transmit (Beep);
+            Stream.Transmit (Silence);
+         end loop;
+         Stream.Drain;
+
+         Stream.Receive (Silence);
+
+         Stream.Finalize;
       end;
    end if;
 end Test;
