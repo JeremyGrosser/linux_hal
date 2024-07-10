@@ -7,9 +7,7 @@ private with Interfaces.C;
 with HAL.SPI;
 with HAL;
 
-package Linux.SPI
-   with Preelaborate
-is
+package Linux.SPI is
 
    type Port
       (Buffer_Length : Natural)

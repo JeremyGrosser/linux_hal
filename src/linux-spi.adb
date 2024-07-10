@@ -8,7 +8,9 @@ with System.Storage_Elements;
 with System;
 with GNAT.OS_Lib;
 
-package body Linux.SPI is
+package body Linux.SPI
+   with Preelaborate
+is
    use Interfaces.C;
 
    --  /usr/include/linux/spi/spi.h
@@ -42,7 +44,7 @@ package body Linux.SPI is
 
    function linux_spi_set_max_speed
       (fd : int;
-       hz : not null access Unsigned_32)
+       hz : Unsigned_32)
        return int
    with Import, Convention => C, External_Name => "linux_spi_set_max_speed";
 
@@ -87,9 +89,8 @@ package body Linux.SPI is
       (This : in out Port;
        Hz   : Natural)
    is
-      Speed : aliased Unsigned_32 := Unsigned_32 (Hz);
    begin
-      if linux_spi_set_max_speed (This.FD, Speed'Access) /= 0 then
+      if linux_spi_set_max_speed (This.FD, Unsigned_32 (Hz)) /= 0 then
          raise Program_Error with "Error setting SPI max speed";
       end if;
    end Set_Max_Speed;
