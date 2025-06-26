@@ -80,12 +80,13 @@ private
    type gpiod_chip is null record;
    type Chip is access all gpiod_chip;
 
-   type gpiod_line is null record;
-   type Line is access all gpiod_line;
+   type gpiod_line_request is null record;
+   type Line_Request is access all gpiod_line_request;
 
    type GPIO_Point is new HAL.GPIO.GPIO_Point with record
       C : Chip;
-      L : Line;
+      Request : Line_Request;
+      Offset : Natural;
    end record;
 
    procedure Reserve

@@ -11,7 +11,7 @@ tags = ["embedded", "hal", "linux", "i2c", "smbus", "gpio", "spi", "audio"]
 
 [[depends-on]]
 hal = "^1"
-libgpiod = "^1"
+libgpiod = "^2"
 libi2c = "^4"
 libpulse = "^16"
 
