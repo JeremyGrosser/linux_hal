@@ -178,6 +178,7 @@ begin
       begin
          Port.Open ("/dev/spidev0.0");
          Port.Set_Max_Speed (10_000_000);
+         Port.Set_Mode (Linux.SPI.SPI_Mode_3);
 
          Port.Transmit (Data, Status);
          Assert (Status = Ok);

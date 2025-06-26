@@ -54,6 +54,12 @@ is
        return int
    with Import, Convention => C, External_Name => "linux_spi_get_max_speed";
 
+   function linux_spi_set_mode
+      (fd   : int;
+       mode : Unsigned_8)
+       return int
+   with Import, Convention => C, External_Name => "linux_spi_set_mode";
+
    procedure Open
       (This     : in out Port;
        Filename : String)
@@ -107,6 +113,18 @@ is
          return Natural (Speed);
       end if;
    end Max_Speed;
+
+   procedure Set_Mode
+      (This : in out Port;
+       Mode : SPI_Mode)
+   is
+      Result : int;
+   begin
+      Result := linux_spi_set_mode (This.FD, SPI_Mode'Pos (Mode));
+      if Result /= 0 then
+         raise Program_Error with "Error setting SPI mode";
+      end if;
+   end Set_Mode;
 
    overriding
    function Data_Size

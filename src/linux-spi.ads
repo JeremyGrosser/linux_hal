@@ -25,6 +25,17 @@ package Linux.SPI is
       (This : Port)
       return Natural;
 
+   type SPI_Mode is
+      (SPI_Mode_0,  --  CPOL=0 CPHA=0
+       SPI_Mode_1,  --  CPOL=0 CPHA=1
+       SPI_Mode_2,  --  CPOL=1 CPHA=0
+       SPI_Mode_3)  --  CPOL=1 CPHA=1
+   with Convention => C;
+
+   procedure Set_Mode
+      (This : in out Port;
+       Mode : SPI_Mode);
+
    function Is_Open
       (This : Port)
       return Boolean;
