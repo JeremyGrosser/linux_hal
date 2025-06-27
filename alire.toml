@@ -10,7 +10,7 @@ website = "https://github.com/JeremyGrosser/linux_hal"
 tags = ["embedded", "hal", "linux", "i2c", "smbus", "gpio", "spi", "audio"]
 
 [[depends-on]]
-hal = "~0.3.0"
+hal = "^1"
 libgpiod = "^1"
 libi2c = "^4"
 libpulse = "^16"
