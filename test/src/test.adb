@@ -159,8 +159,8 @@ begin
          CHIP_0 : constant Linux.GPIO.Chip := Linux.GPIO.Open ("/dev/gpiochip0");
          GP25   : Linux.GPIO.GPIO_Point := Linux.GPIO.Find (CHIP_0, "GPIO25");
       begin
-         GP25.Set_Mode (Output);
          GP25.Set_Pull_Resistor (Pull_Up);
+         GP25.Set_Mode (Output);
 
          GP25.Set;
          delay 1.0;

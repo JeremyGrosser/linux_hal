@@ -13,7 +13,7 @@ tags = ["embedded", "hal", "linux", "i2c", "smbus", "gpio", "spi", "audio"]
 hal = "^1"
 libgpiod = "^2"
 libi2c = "^4"
-libpulse = "^16"
+libpulse = "^17"
 
 [available.'case(distribution)']
 'debian|ubuntu|fedora|centos' = true
