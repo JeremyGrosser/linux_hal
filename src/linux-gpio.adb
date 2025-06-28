@@ -3,7 +3,7 @@
 --
 --  SPDX-License-Identifier: BSD-3-Clause
 --
-with Interfaces.C;
+with Interfaces.C; use Interfaces.C;
 with GNAT.OS_Lib;
 
 package body Linux.GPIO is
@@ -21,109 +21,95 @@ package body Linux.GPIO is
    type Request_Config is access all gpiod_request_config;
 
    --  libgpiod v2 enums
-   type gpiod_line_direction is new Interfaces.C.int;
-   GPIOD_LINE_DIRECTION_INPUT : constant gpiod_line_direction := 2;
-   GPIOD_LINE_DIRECTION_OUTPUT : constant gpiod_line_direction := 3;
+   type gpiod_line_direction is new int;
+   GPIOD_LINE_DIRECTION_INPUT    : constant gpiod_line_direction := 2;
+   GPIOD_LINE_DIRECTION_OUTPUT   : constant gpiod_line_direction := 3;
 
-   type gpiod_line_bias is new Interfaces.C.int;
-   GPIOD_LINE_BIAS_AS_IS : constant gpiod_line_bias := 1;
-   GPIOD_LINE_BIAS_DISABLED : constant gpiod_line_bias := 3;
-   GPIOD_LINE_BIAS_PULL_UP : constant gpiod_line_bias := 4;
-   GPIOD_LINE_BIAS_PULL_DOWN : constant gpiod_line_bias := 5;
+   type gpiod_line_bias is new int;
+   GPIOD_LINE_BIAS_AS_IS      : constant gpiod_line_bias := 1;
+   GPIOD_LINE_BIAS_DISABLED   : constant gpiod_line_bias := 3;
+   GPIOD_LINE_BIAS_PULL_UP    : constant gpiod_line_bias := 4;
+   GPIOD_LINE_BIAS_PULL_DOWN  : constant gpiod_line_bias := 5;
 
-   type gpiod_line_value is new Interfaces.C.int;
-   GPIOD_LINE_VALUE_INACTIVE : constant gpiod_line_value := 0;
-   GPIOD_LINE_VALUE_ACTIVE : constant gpiod_line_value := 1;
-
-   --  libgpiod v2 configuration functions
-   function gpiod_line_settings_new return Line_Settings
-      with Import, Convention => C, External_Name => "gpiod_line_settings_new";
-
-   procedure gpiod_line_settings_free (settings : Line_Settings)
-      with Import, Convention => C, External_Name => "gpiod_line_settings_free";
-
-   function gpiod_line_settings_set_direction
-      (settings : Line_Settings;
-       direction : gpiod_line_direction)
-       return Interfaces.C.int
-      with Import, Convention => C, External_Name => "gpiod_line_settings_set_direction";
-
-   function gpiod_line_settings_set_bias
-      (settings : Line_Settings;
-       bias : gpiod_line_bias)
-       return Interfaces.C.int
-      with Import, Convention => C, External_Name => "gpiod_line_settings_set_bias";
-
-   function gpiod_line_config_new return Line_Config
-      with Import, Convention => C, External_Name => "gpiod_line_config_new";
-
-   procedure gpiod_line_config_free (config : Line_Config)
-      with Import, Convention => C, External_Name => "gpiod_line_config_free";
-
-   function gpiod_line_config_add_line_settings
-      (config : Line_Config;
-       offsets : access Interfaces.C.unsigned;
-       num_offsets : Interfaces.C.size_t;
-       settings : Line_Settings)
-       return Interfaces.C.int
-      with Import, Convention => C, External_Name => "gpiod_line_config_add_line_settings";
-
-   function gpiod_request_config_new return Request_Config
-      with Import, Convention => C, External_Name => "gpiod_request_config_new";
-
-   procedure gpiod_request_config_free (config : Request_Config)
-      with Import, Convention => C, External_Name => "gpiod_request_config_free";
-
-   procedure gpiod_request_config_set_consumer
-      (config : Request_Config;
-       consumer : String)
-      with Import, Convention => C, External_Name => "gpiod_request_config_set_consumer";
-
-   --  Line request functions
-   function gpiod_chip_request_lines
-      (c : Chip;
-       req_cfg : Request_Config;
-       line_cfg : Line_Config)
-       return Line_Request
-      with Import, Convention => C, External_Name => "gpiod_chip_request_lines";
-
-   procedure gpiod_line_request_release (request : Line_Request)
-      with Import, Convention => C, External_Name => "gpiod_line_request_release";
-
-   function gpiod_line_request_get_value
-      (request : Line_Request;
-       offset : Interfaces.C.unsigned)
-       return gpiod_line_value
-      with Import, Convention => C, External_Name => "gpiod_line_request_get_value";
+   type gpiod_line_value is new int;
+   GPIOD_LINE_VALUE_INACTIVE  : constant gpiod_line_value := 0;
+   GPIOD_LINE_VALUE_ACTIVE    : constant gpiod_line_value := 1;
 
    function gpiod_line_request_set_value
       (request : Line_Request;
-       offset : Interfaces.C.unsigned;
-       value : gpiod_line_value)
-       return Interfaces.C.int
-      with Import, Convention => C, External_Name => "gpiod_line_request_set_value";
-
-   --  Line finding functions
-   function gpiod_chip_get_line_offset_from_name
-      (c : Chip;
-       name : String)
-       return Interfaces.C.int
-      with Import, Convention => C, External_Name => "gpiod_chip_get_line_offset_from_name";
+       offset  : unsigned;
+       value   : gpiod_line_value)
+       return int
+   with Import, Convention => C, External_Name => "gpiod_line_request_set_value";
 
    function Create_Line_Request
-      (C : Chip;
-       Offset : Natural;
-       Direction : gpiod_line_direction;
-       Bias : gpiod_line_bias := GPIOD_LINE_BIAS_AS_IS)
+      (C          : Chip;
+       Offset     : Natural;
+       Direction  : gpiod_line_direction;
+       Bias       : gpiod_line_bias := GPIOD_LINE_BIAS_AS_IS)
        return Line_Request
    is
-      use type Interfaces.C.int;
+      function gpiod_line_settings_new
+         return Line_Settings
+      with Import, Convention => C, External_Name => "gpiod_line_settings_new";
 
-      Settings : constant Line_Settings := gpiod_line_settings_new;
-      Config : constant Line_Config := gpiod_line_config_new;
-      Req_Config : constant Request_Config := gpiod_request_config_new;
-      Offset_C : aliased Interfaces.C.unsigned := Interfaces.C.unsigned (Offset);
-      Request : Line_Request;
+      procedure gpiod_line_settings_free
+         (settings : Line_Settings)
+      with Import, Convention => C, External_Name => "gpiod_line_settings_free";
+
+      function gpiod_line_config_new
+         return Line_Config
+      with Import, Convention => C, External_Name => "gpiod_line_config_new";
+
+      procedure gpiod_line_config_free
+         (config : Line_Config)
+      with Import, Convention => C, External_Name => "gpiod_line_config_free";
+
+      function gpiod_request_config_new
+         return Request_Config
+      with Import, Convention => C, External_Name => "gpiod_request_config_new";
+
+      procedure gpiod_request_config_free
+         (config : Request_Config)
+      with Import, Convention => C, External_Name => "gpiod_request_config_free";
+
+      function gpiod_line_settings_set_direction
+         (settings  : Line_Settings;
+          direction : gpiod_line_direction)
+          return int
+      with Import, Convention => C, External_Name => "gpiod_line_settings_set_direction";
+
+      function gpiod_line_settings_set_bias
+         (settings : Line_Settings;
+          bias     : gpiod_line_bias)
+          return int
+      with Import, Convention => C, External_Name => "gpiod_line_settings_set_bias";
+
+      function gpiod_line_config_add_line_settings
+         (config        : Line_Config;
+          offsets       : access unsigned;
+          num_offsets   : size_t;
+          settings      : Line_Settings)
+          return int
+      with Import, Convention => C, External_Name => "gpiod_line_config_add_line_settings";
+
+      procedure gpiod_request_config_set_consumer
+         (config     : Request_Config;
+          consumer   : String)
+      with Import, Convention => C, External_Name => "gpiod_request_config_set_consumer";
+
+      function gpiod_chip_request_lines
+         (c          : Chip;
+          req_cfg    : Request_Config;
+          line_cfg   : Line_Config)
+          return Line_Request
+      with Import, Convention => C, External_Name => "gpiod_chip_request_lines";
+
+      Settings    : constant Line_Settings := gpiod_line_settings_new;
+      Config      : constant Line_Config := gpiod_line_config_new;
+      Req_Config  : constant Request_Config := gpiod_request_config_new;
+      Offset_C    : aliased unsigned := unsigned (Offset);
+      Request     : Line_Request;
    begin
       if Settings = null or else Config = null or else Req_Config = null then
          raise Program_Error with "Failed to create gpiod configuration objects";
@@ -182,6 +168,9 @@ package body Linux.GPIO is
    procedure Release
       (This : in out GPIO_Point)
    is
+      procedure gpiod_line_request_release
+         (request : Line_Request)
+      with Import, Convention => C, External_Name => "gpiod_line_request_release";
    begin
       if This.Request /= null then
          gpiod_line_request_release (This.Request);
@@ -194,8 +183,13 @@ package body Linux.GPIO is
        Name : String)
        return GPIO_Point
    is
-      use type Interfaces.C.int;
-      Offset : Interfaces.C.int;
+      function gpiod_chip_get_line_offset_from_name
+         (c    : Chip;
+          name : String)
+          return int
+      with Import, Convention => C, External_Name => "gpiod_chip_get_line_offset_from_name";
+
+      Offset : int;
    begin
       Offset := gpiod_chip_get_line_offset_from_name (This, Name);
       if Offset < 0 then
@@ -293,9 +287,15 @@ package body Linux.GPIO is
       (This : GPIO_Point)
       return Boolean
    is
+      function gpiod_line_request_get_value
+         (request : Line_Request;
+          offset  : unsigned)
+          return gpiod_line_value
+      with Import, Convention => C, External_Name => "gpiod_line_request_get_value";
+
       Value : gpiod_line_value;
    begin
-      Value := gpiod_line_request_get_value (This.Request, Interfaces.C.unsigned (This.Offset));
+      Value := gpiod_line_request_get_value (This.Request, unsigned (This.Offset));
       case Value is
          when GPIOD_LINE_VALUE_INACTIVE => return False;
          when GPIOD_LINE_VALUE_ACTIVE => return True;
@@ -308,10 +308,9 @@ package body Linux.GPIO is
    procedure Set
       (This : in out GPIO_Point)
    is
-      use type Interfaces.C.int;
    begin
       if gpiod_line_request_set_value
-         (This.Request, Interfaces.C.unsigned (This.Offset), GPIOD_LINE_VALUE_ACTIVE) /= 0
+         (This.Request, unsigned (This.Offset), GPIOD_LINE_VALUE_ACTIVE) /= 0
       then
          raise Program_Error with "Error setting GPIO: " & GNAT.OS_Lib.Errno_Message;
       end if;
@@ -321,10 +320,9 @@ package body Linux.GPIO is
    procedure Clear
       (This : in out GPIO_Point)
    is
-      use type Interfaces.C.int;
    begin
       if gpiod_line_request_set_value
-         (This.Request, Interfaces.C.unsigned (This.Offset), GPIOD_LINE_VALUE_INACTIVE) /= 0
+         (This.Request, unsigned (This.Offset), GPIOD_LINE_VALUE_INACTIVE) /= 0
       then
          raise Program_Error with "Error clearing GPIO: " & GNAT.OS_Lib.Errno_Message;
       end if;
