@@ -42,6 +42,35 @@ package body Linux.GPIO is
        return int
    with Import, Convention => C, External_Name => "gpiod_line_request_set_value";
 
+   function Open
+      (Path : String)
+      return Chip
+   is
+      function gpiod_chip_open
+         (path : char_array)
+         return Chip
+      with Import, Convention => C, External_Name => "gpiod_chip_open";
+      C : Chip;
+   begin
+      C := gpiod_chip_open (To_C (Path));
+      if C = null then
+         raise Program_Error with "gpiod_chip_open failed";
+      else
+         return C;
+      end if;
+   end Open;
+
+   procedure Close
+      (This : in out Chip)
+   is
+      procedure gpiod_chip_close
+         (c : Chip)
+      with Import, Convention => C, External_Name => "gpiod_chip_close";
+   begin
+      gpiod_chip_close (This);
+      This := null;
+   end Close;
+
    function Create_Line_Request
       (C          : Chip;
        Offset     : Natural;

@@ -15,12 +15,10 @@ is
 
    function Open
       (Path : String)
-      return Chip
-   with Import, Convention => C, External_Name => "gpiod_chip_open";
+      return Chip;
 
    procedure Close
-      (This : Chip)
-   with Import, Convention => C, External_Name => "gpiod_chip_close";
+      (This : in out Chip);
 
    function Find
       (This : Chip;
